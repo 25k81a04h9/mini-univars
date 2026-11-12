@@ -1,0 +1,6 @@
+{
+  "name": "Our Little Universe ❤️",
+  "description": "A private couple-only digital universe for Bubu and Dudu with relationship counter, encrypted chat, shared gallery, calendar, love notes, voice & video calls, and travel planner.",
+  "requestFramePermissions": ["camera", "microphone", "notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

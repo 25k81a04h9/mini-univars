@@ -1,0 +1,16 @@
+{
+  "short_name": "Universe ❤️",
+  "name": "Our Little Universe ❤️ Bubu & Dudu",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FFF9FA",
+  "theme_color": "#FF8BA7",
+  "display": "standalone",
+  "orientation": "portrait"
+}
