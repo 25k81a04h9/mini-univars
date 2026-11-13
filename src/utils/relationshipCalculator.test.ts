@@ -4,7 +4,8 @@ import {
   calculateRelationshipDuration,
   getNextYearlyAnniversary,
   getMilestones,
-  getOnThisDayItems
+  getOnThisDayItems,
+  formatOrdinal
 } from './relationshipCalculator';
 
 test('calculateRelationshipDuration calculates exact days, months, and years', () => {
@@ -65,3 +66,17 @@ test('getOnThisDayItems matches items from previous years on the same month and 
   assert.equal(matched[0].yearsAgo, 2);
   assert.equal(matched[1].yearsAgo, 1);
 });
+
+test('formatOrdinal formats English ordinals accurately', () => {
+  assert.equal(formatOrdinal(1), '1st');
+  assert.equal(formatOrdinal(2), '2nd');
+  assert.equal(formatOrdinal(3), '3rd');
+  assert.equal(formatOrdinal(4), '4th');
+  assert.equal(formatOrdinal(11), '11th');
+  assert.equal(formatOrdinal(12), '12th');
+  assert.equal(formatOrdinal(13), '13th');
+  assert.equal(formatOrdinal(21), '21st');
+  assert.equal(formatOrdinal(22), '22nd');
+  assert.equal(formatOrdinal(23), '23rd');
+});
+

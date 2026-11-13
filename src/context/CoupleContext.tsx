@@ -17,6 +17,7 @@ import {
   SpecialDates,
 } from '../types';
 import { sounds } from '../utils/soundEffects';
+import { safeParseResponse } from '../utils/api';
 
 interface CallingState {
   active: boolean;
@@ -269,9 +270,10 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const resCouple = await fetch('/api/couple/current', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      const parsedCouple = await safeParseResponse(resCouple);
 
-      if (resCouple.ok) {
-        const coupleData = await resCouple.json();
+      if (parsedCouple.ok && parsedCouple.data) {
+        const coupleData = parsedCouple.data;
         setCoupleSpace(coupleData.couple);
         setPartner(coupleData.partner);
 
@@ -280,9 +282,10 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const resData = await fetch('/api/couple/data', {
             headers: { Authorization: `Bearer ${token}` },
           });
+          const parsedData = await safeParseResponse(resData);
 
-          if (resData.ok) {
-            const d = await resData.json();
+          if (parsedData.ok && parsedData.data) {
+            const d = parsedData.data;
             setMessages(d.messages || []);
             setPhotos(d.photos || []);
             setCalendarEvents(d.calendarEvents || []);
@@ -324,12 +327,12 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
+      const parsed = await safeParseResponse<{ couple: CoupleSpace }>(res);
+      if (!parsed.ok || !parsed.data) return { success: false, error: parsed.error };
 
       await refreshCouple();
       sounds.playCelebration();
-      return { success: true, couple: data.couple };
+      return { success: true, couple: parsed.data.couple };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
     }
@@ -349,12 +352,12 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         body: JSON.stringify({ inviteCode }),
       });
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
+      const parsed = await safeParseResponse<{ couple: CoupleSpace }>(res);
+      if (!parsed.ok || !parsed.data) return { success: false, error: parsed.error };
 
       await refreshCouple();
       sounds.playCelebration();
-      return { success: true, couple: data.couple };
+      return { success: true, couple: parsed.data.couple };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
     }
@@ -380,8 +383,8 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         body: JSON.stringify(setupData),
       });
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
+      const parsed = await safeParseResponse(res);
+      if (!parsed.ok) return { success: false, error: parsed.error };
 
       await refreshCouple();
       sounds.playCelebration();
@@ -406,9 +409,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(dates),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCoupleSpace(data.couple);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setCoupleSpace(parsed.data.couple);
         sounds.playCelebration();
       }
     } catch (err) {
@@ -442,9 +445,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         body: JSON.stringify(msg),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setMessages((prev) => [...prev, data.message]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setMessages((prev) => [...prev, parsed.data.message]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -479,9 +482,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(photo),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setPhotos((prev) => [data.photo, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setPhotos((prev) => [parsed.data.photo, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -519,9 +522,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setPhotos((prev) => prev.map((p) => (p.id === id ? data.photo : p)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setPhotos((prev) => prev.map((p) => (p.id === id ? parsed.data.photo : p)));
         sounds.playHeartReaction();
       }
     } catch (err) {
@@ -540,9 +543,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ text }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setPhotos((prev) => prev.map((p) => (p.id === photoId ? data.photo : p)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setPhotos((prev) => prev.map((p) => (p.id === photoId ? parsed.data.photo : p)));
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -570,9 +573,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(event),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCalendarEvents((prev) => [...prev, data.event]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setCalendarEvents((prev) => [...prev, parsed.data.event]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -614,9 +617,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(note),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setNotes((prev) => [data.note, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setNotes((prev) => [parsed.data.note, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -635,9 +638,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(updates),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setNotes((prev) => prev.map((n) => (n.id === id ? data.note : n)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setNotes((prev) => prev.map((n) => (n.id === id ? parsed.data.note : n)));
       }
     } catch (err) {
       console.warn('Error updating note:', err);
@@ -682,9 +685,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(goal),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setBucketGoals((prev) => [data.goal, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setBucketGoals((prev) => [parsed.data.goal, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -707,9 +710,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ completed: nextCompleted }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setBucketGoals((prev) => prev.map((g) => (g.id === id ? data.goal : g)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setBucketGoals((prev) => prev.map((g) => (g.id === id ? parsed.data.goal : g)));
         if (nextCompleted) sounds.playCelebration();
       }
     } catch (err) {
@@ -744,12 +747,12 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ mood, note }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        const dateStr = data.mood.date;
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        const dateStr = parsed.data.mood.date;
         setMoods((prev) => {
           const filtered = prev.filter((m) => !(m.userId === currentUser?.id && m.date === dateStr));
-          return [data.mood, ...filtered];
+          return [parsed.data.mood, ...filtered];
         });
         sounds.playHeartReaction();
       }
@@ -772,9 +775,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setHugsCount(data.hugsCount);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setHugsCount(parsed.data.hugsCount);
         sounds.playHugSound();
         setShowHugAnimation(true);
       }
@@ -797,9 +800,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(letter),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setLoveLetters((prev) => [data.letter, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setLoveLetters((prev) => [parsed.data.letter, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -814,9 +817,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setLoveLetters((prev) => prev.map((l) => (l.id === id ? data.letter : l)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setLoveLetters((prev) => prev.map((l) => (l.id === id ? parsed.data.letter : l)));
         sounds.playCelebration();
       }
     } catch (err) {
@@ -836,9 +839,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(song),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCoupleSongs((prev) => [data.song, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setCoupleSongs((prev) => [parsed.data.song, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -882,9 +885,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify(tripData),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setTrips((prev) => [data.trip, ...prev]);
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setTrips((prev) => [parsed.data.trip, ...prev]);
         sounds.playMessagePop();
       }
     } catch (err) {
@@ -905,9 +908,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ visited: !target.visited }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setTrips((prev) => prev.map((t) => (t.id === id ? data.trip : t)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setTrips((prev) => prev.map((t) => (t.id === id ? parsed.data.trip : t)));
       }
     } catch (err) {
       console.warn('Error toggling trip visited:', err);
@@ -930,9 +933,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ packingList: updated }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setTrips((prev) => prev.map((t) => (t.id === tripId ? data.trip : t)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setTrips((prev) => prev.map((t) => (t.id === tripId ? parsed.data.trip : t)));
       }
     } catch (err) {
       console.warn('Error toggling packing item:', err);
@@ -984,9 +987,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ date: todayStr, answer }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDailyAnswers(data.answers || {});
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setDailyAnswers(parsed.data.answers || {});
         sounds.playHeartReaction();
       }
     } catch (err) {
@@ -1005,9 +1008,9 @@ export const CoupleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ questionId, answerIndex }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setQuizQuestions((prev) => prev.map((q) => (q.id === questionId ? data.question : q)));
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok && parsed.data) {
+        setQuizQuestions((prev) => prev.map((q) => (q.id === questionId ? parsed.data.question : q)));
         sounds.playCelebration();
       }
     } catch (err) {

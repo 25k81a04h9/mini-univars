@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCouple } from '../context/CoupleContext';
 import { useAuth } from '../context/AuthContext';
+import { safeParseResponse } from '../utils/api';
 import { DuduAvatar, BubuAvatar, BubuAndDuduTogether } from '../components/BubuDuduAvatars';
 import { sounds } from '../utils/soundEffects';
 
@@ -41,7 +42,7 @@ export const SettingsView: React.FC<{
     trips,
   } = useCouple();
 
-  const { currentUser, token, logout } = useAuth();
+  const { currentUser, token, logout, refreshUser } = useAuth();
 
   const [nameInput, setNameInput] = useState(currentUser?.name || '');
   const [nicknameInput, setNicknameInput] = useState(currentUser?.nickname || '');
@@ -68,7 +69,9 @@ export const SettingsView: React.FC<{
           avatar: avatarInput,
         }),
       });
-      if (res.ok) {
+      const parsed = await safeParseResponse(res);
+      if (parsed.ok) {
+        await refreshUser();
         setSavedSuccess(true);
         sounds.playMessagePop();
         setTimeout(() => setSavedSuccess(false), 2000);

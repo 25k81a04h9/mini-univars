@@ -19,6 +19,7 @@ import {
   calculateRelationshipDuration,
   getNextYearlyAnniversary,
   getMilestones,
+  formatOrdinal,
 } from '../utils/relationshipCalculator';
 import { sounds } from '../utils/soundEffects';
 import { ActiveTab } from '../components/Navbar';
@@ -287,7 +288,7 @@ export const HomeScreen: React.FC<{ onNavigate: (tab: ActiveTab) => void }> = ({
               )}
             </div>
             <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 mt-1">
-              Our {nextAnniv.nextYearNumber}th Year Anniversary ({nextAnniv.nextDate}) 💍
+              Our {formatOrdinal(nextAnniv.nextYearNumber)} Year Anniversary ({nextAnniv.nextDate}) 💍
             </p>
           </div>
 

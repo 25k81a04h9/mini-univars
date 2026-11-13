@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserAccount, BearAvatarType } from '../types';
+import { safeParseResponse } from '../utils/api';
 
 interface AuthContextType {
   currentUser: UserAccount | null;
@@ -37,15 +38,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${savedToken}` },
       });
+      const parsed = await safeParseResponse<{ user: UserAccount }>(res);
 
-      if (res.ok) {
-        const data = await res.json();
-        setCurrentUser(data.user);
+      if (parsed.ok && parsed.data?.user) {
+        setCurrentUser(parsed.data.user);
         setToken(savedToken);
-      } else {
+      } else if (res.status === 401) {
         localStorage.removeItem('olu_auth_token');
         setToken(null);
         setCurrentUser(null);
+      } else {
+        console.warn('Session refresh notice:', parsed.error);
       }
     } catch (err) {
       console.warn('Session refresh notice:', err);
@@ -73,14 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify(data),
       });
 
-      const result = await res.json();
-      if (!res.ok) {
-        return { success: false, error: result.error || 'Registration failed' };
+      const parsed = await safeParseResponse<{ token: string; user: UserAccount }>(res);
+      if (!parsed.ok || !parsed.data?.token) {
+        return { success: false, error: parsed.error || 'Registration failed' };
       }
 
-      localStorage.setItem('olu_auth_token', result.token);
-      setToken(result.token);
-      setCurrentUser(result.user);
+      localStorage.setItem('olu_auth_token', parsed.data.token);
+      setToken(parsed.data.token);
+      setCurrentUser(parsed.data.user);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
@@ -98,14 +101,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       });
 
-      const result = await res.json();
-      if (!res.ok) {
-        return { success: false, error: result.error || 'Login failed' };
+      const parsed = await safeParseResponse<{ token: string; user: UserAccount }>(res);
+      if (!parsed.ok || !parsed.data?.token) {
+        return { success: false, error: parsed.error || 'Login failed' };
       }
 
-      localStorage.setItem('olu_auth_token', result.token);
-      setToken(result.token);
-      setCurrentUser(result.user);
+      localStorage.setItem('olu_auth_token', parsed.data.token);
+      setToken(parsed.data.token);
+      setCurrentUser(parsed.data.user);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
